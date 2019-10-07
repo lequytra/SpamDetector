@@ -3,3 +3,4 @@ src/.ipynb_checkpoints/
 Data/
 Data.zip
 .idea/
+src/__pycache__/
