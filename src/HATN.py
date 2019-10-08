@@ -8,9 +8,9 @@ from keras.layers import Embedding, GRU, Bidirectional, TimeDistributed
 from keras.models import Model
 
 MAX_SENT_LENGTH = 100
-MAX_SENTS = 15
+MAX_SENTS = 30
 MAX_NB_WORDS = 20000
-EMBEDDING_DIM = 100
+EMBEDDING_DIM = 300
 VALIDATION_SPLIT = 0.2
 
 
@@ -22,11 +22,11 @@ def text_processing(emails, labels, weights_path=None):
     :return: list of lists
     """
     # Split emails' contents to list of sentences
-    emails = [item.split('.') for item in emails]
-    tokenizer = Tokenizer(nb_words=MAX_NB_WORDS)
-    tokenizer.fit_on_texts(emails)
 
+    tokenizer = Tokenizer(num_words=MAX_NB_WORDS)
+    tokenizer.fit_on_texts(emails)
     # Initialize 3D array of 0s
+    emails = [item.split('.') for item in emails]
     data = np.zeros((len(emails), MAX_SENTS, MAX_SENT_LENGTH), dtype='int32')
 
     for i, sentences in enumerate(emails):
@@ -57,16 +57,19 @@ def text_processing(emails, labels, weights_path=None):
     x_val = data[-nb_validation_samples:]
     y_val = labels[-nb_validation_samples:]
 
-    print("Number of positive reviews in thr training set is {}/{}".format(y_train.sum(axis=0), len(y_train)))
-    print("Number of positive reviews in thr training set is {}/{}".format(y_val.sum(axis=0), len(y_val)))
+    print("Number of spams in the training set is {}/{}".format(y_train.sum(axis=0), len(y_train)))
+    print("Number of spams in the training set is {}/{}".format(y_val.sum(axis=0), len(y_val)))
 
     embeddings_index = {}
     with open(weights_path, 'r+') as f:
         for line in f:
-            values = line.split()
-            word = values[0]
-            coefs = np.asarray(values[1:], dtype='float32')
-            embeddings_index[word] = coefs
+            try:
+                values = line.split()
+                word = values[0]
+                coefs = np.asarray(values[1:], dtype='float32')
+                embeddings_index[word] = coefs
+            except ValueError:
+                continue
 
     print('Total %s word vectors.' % len(embeddings_index))
 
@@ -87,7 +90,7 @@ def HATN(num_words, trainable=True, embedding_matrix=None):
                                     weights=[embedding_matrix],
                                     input_length=MAX_SENT_LENGTH,
                                     trainable=False,
-                                    mask_zero=True)
+                                    mask_zero=False)
 
     else:
         embedding_layer = Embedding(num_words,
@@ -107,13 +110,13 @@ def HATN(num_words, trainable=True, embedding_matrix=None):
     review_encoder = TimeDistributed(sentEncoder)(review_input)
     l_lstm_sent = Bidirectional(GRU(100, return_sequences=True))(review_encoder)
     l_att_sent = AttLayer(100)(l_lstm_sent)
-    preds = Dense(2, activation='softmax')(l_att_sent)
+    preds = Dense(1, activation='softmax')(l_att_sent)
     model = Model(review_input, preds)
 
     return model
 
 
-# model.compile(loss='categorical_crossentropy',
+# model.compile(loss='binary_crossentropy',
 #               optimizer='rmsprop',
 #               metrics=['acc'])
 #
