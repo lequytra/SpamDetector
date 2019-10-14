@@ -4,7 +4,7 @@ def evaluate(pred, truth):
 	total = pred.shape[0]
 	res1 = pred + truth
 	res2 = pred - truth
-	assert res.shape == pred.shape
+	assert res1.shape == pred.shape
 	true_pos = res1[res1 == 2].shape[0]
 	true_neg = res1[res1 == 0].shape[0]
 	false_pos = res2[res2 == 1].shape[0]

@@ -7,8 +7,8 @@ from keras.layers import Dense, Input
 from keras.layers import Embedding, GRU, Bidirectional, TimeDistributed
 from keras.models import Model
 
-MAX_SENT_LENGTH = 100
-MAX_SENTS = 30
+MAX_SENT_LENGTH = 15
+MAX_SENTS = 8
 MAX_NB_WORDS = 20000
 EMBEDDING_DIM = 300
 VALIDATION_SPLIT = 0.2
@@ -83,7 +83,7 @@ def text_processing(emails, labels, weights_path=None):
     return (x_train, y_train), (x_val, y_val), word_index, embedding_matrix
 
 
-def HATN(num_words, trainable=True, embedding_matrix=None):
+def HATN(num_words, numclass=1, trainable=True, embedding_matrix=None):
     if not trainable:
         embedding_layer = Embedding(num_words,
                                     EMBEDDING_DIM,
@@ -109,8 +109,8 @@ def HATN(num_words, trainable=True, embedding_matrix=None):
     review_input = Input(shape=(MAX_SENTS, MAX_SENT_LENGTH), dtype='int32')
     review_encoder = TimeDistributed(sentEncoder)(review_input)
     l_lstm_sent = Bidirectional(GRU(100, return_sequences=True))(review_encoder)
-    l_att_sent = AttLayer(100)(l_lstm_sent)
-    preds = Dense(1, activation='softmax')(l_att_sent)
+    l_att_sent = AttLayer(100)(l_lstms_sent)
+    preds = Dense(numclass, activation='softmax')(l_att_sent)
     model = Model(review_input, preds)
 
     return model
